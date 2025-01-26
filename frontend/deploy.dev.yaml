@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: dev
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: mesh-demo/frontend:dev
+        imagePullPolicy: Never
+        env:
+        - name: CODE_PATH
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: frontend-code
+          mountPath: /app
+      volumes:
+      - name: frontend-code
+        hostPath:
+          path: /Users/braedennorman/Documents/personal/simple-app/frontend  
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: dev
+spec:
+  type: LoadBalancer  
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 9090 
+      targetPort: 80
