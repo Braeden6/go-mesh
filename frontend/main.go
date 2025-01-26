@@ -40,7 +40,7 @@ func main() {
         }
 
         frontendResp := FrontendResponse{
-            FrontendMessage: "Frontend received data 123123",
+            FrontendMessage: "Frontend received data asd",
             BackendData:     backendResp,
         }
 

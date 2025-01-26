@@ -1,0 +1,88 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: dev
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  # behavior:
+  #   scaleUp:
+  #     stabilizationWindowSeconds: 60
+  #     policies:
+  #     - type: Percent
+  #       value: 100
+  #       periodSeconds: 15
+  #   scaleDown:
+  #     stabilizationWindowSeconds: 300
+  #     policies:
+  #     - type: Percent
+  #       value: 100
+  #       periodSeconds: 15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: dev
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - name: frontend
+        image: mesh-demo/frontend:dev
+        imagePullPolicy: Never
+        resources:
+          requests:
+            cpu: "200m"
+          limits:
+            cpu: "500m"
+        env:
+        - name: CODE_PATH
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: frontend-code
+          mountPath: /app
+      volumes:
+      - name: frontend-code
+        hostPath:
+          path: $CODE_ROOT/frontend
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: dev
+spec:
+  type: LoadBalancer  
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 9090 
+      targetPort: 80
