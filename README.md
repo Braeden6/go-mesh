@@ -1,5 +1,25 @@
 # Mesh Demo
 
+
+## setup k3s
+
+```bash
+curl -sfL https://get.k3s.io | sh -
+
+# setup k3s with docker (or optional use containerd cli)
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--docker" sh -
+
+# check status
+sudo systemctl status k3s
+
+# allow kubectl to use k3s
+mkdir -p ~/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown $USER:$USER ~/.kube/config
+chmod 600 ~/.kube/config
+export KUBECONFIG=~/.kube/config
+```
+
 ```bash
 
 # Install Gateway API CRDs
@@ -13,12 +33,14 @@ echo 'export PATH=$PATH:/usr/local/bin' >> ~/.zshrc
 source ~/.zshrc
 
 # install istio on k8s
+# might need this if you are getting certificate errors
+# export KUBECONFIG=/etc/rancher/k3s/k3s.yaml 
 istioctl install --set profile=demo -y
 
 # install helm
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# install metrics-server
+# install metrics-server (optional,k3s has metrics-server built in)
 helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
 helm repo update
 helm install metrics-server metrics-server/metrics-server \
@@ -32,13 +54,11 @@ helm install metrics-server metrics-server/metrics-server \
 # helm install keda kedacore/keda --namespace keda --create-namespace
 
 # dev setup
-docker build -t mesh-demo/backend:dev -f backend/Dockerfile.dev backend/
-docker build -t mesh-demo/frontend:dev -f frontend/Dockerfile.dev frontend/
-
 kubectl create namespace dev
 kubectl label namespace dev istio-injection=enabled
 source dev.sh
 kubectl apply -f expose.dev.yaml
+# if you get value mount issue check dev.sh and update code_root
 ```
 
 ## Setup istio dashboard

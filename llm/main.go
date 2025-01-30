@@ -15,7 +15,7 @@ type Response struct {
 func main() {
 	http.HandleFunc("/api/data", func(w http.ResponseWriter, r *http.Request) {
 		resp := Response{
-			Message:   "Hello from backend!",
+			Message:   "Hello from llm!",
 			Timestamp: time.Now(),
 		}
 
